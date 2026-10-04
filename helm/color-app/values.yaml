@@ -1,9 +1,9 @@
-replicaCount: 3
+replicaCount: 2
 
 image:
   repository: 068704208379.dkr.ecr.us-east-1.amazonaws.com/color-app
   pullPolicy: IfNotPresent
-  tag: "v1"
+  tag: "v2"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -27,11 +27,11 @@ service:
 
 resources:
   limits:
-    cpu: 250m
-    memory: 256Mi
+    cpu: 200m
+    memory: 64Mi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 50m
+    memory: 32Mi
 
 env:
   - name: SECRET_KEY
@@ -52,7 +52,7 @@ env:
 
 autoscaling:
   enabled: true
-  minReplicas: 1
+  minReplicas: 3
   maxReplicas: 8
   targetCPUUtilizationPercentage: 60
 
@@ -73,14 +73,14 @@ affinity: {}
 
 namespace:
   create: true
-  name: color-app
+  name: production
 
 configmap:
   enabled: true
   data:
-    APP_COLOR: "blue"
-    APP_ENV: "development"
-    APP_MESSAGE: "Welcome to the Color App!"
+    APP_COLOR: "purple"
+    APP_ENV: "production"
+    APP_MESSAGE: "Hello, Jesus is Lord!"
 
 secretStore:
   enabled: true
@@ -95,8 +95,14 @@ externalSecret:
     kind: SecretStore
   data:
     - secretKey: SECRET_KEY
-      remoteKey: color-app/secret
+      remoteKey: color-app/prod
       property: SECRET_KEY
+    - secretKey: DB_PASSWORD
+      remoteKey: color-app/prod
+      property: DB_PASSWORD
+    - secretKey: API_KEY
+      remoteKey: color-app/prod
+      property: API_KEY
 
 loadBalancer:
   enabled: true
@@ -105,5 +111,5 @@ loadBalancer:
 persistence:
   enabled: true
   accessMode: ReadWriteOnce
-  size: 1Gi
-  storageClass: ""
+  size: 2Gi
+  storageClass: "gp2"
