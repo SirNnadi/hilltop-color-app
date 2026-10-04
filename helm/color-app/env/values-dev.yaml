@@ -1,0 +1,109 @@
+replicaCount: 1
+
+image:
+  repository: 068704208379.dkr.ecr.us-east-1.amazonaws.com/color-app
+  pullPolicy: IfNotPresent
+  tag: "v1"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  port: 8080
+
+resources:
+  limits:
+    cpu: 250m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+env:
+  - name: SECRET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: color-app-secret
+        key: SECRET_KEY
+  - name: DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: color-app-secret
+        key: DB_PASSWORD
+  - name: API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: color-app-secret
+        key: API_KEY
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 60
+
+volumes:
+  - name: app-data
+    persistentVolumeClaim:
+      claimName: color-app-pvc
+
+volumeMounts:
+  - name: app-data
+    mountPath: /usr/src/app/data
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+namespace:
+  create: true
+  name: develop
+
+configmap:
+  enabled: true
+  data:
+    APP_COLOR: "blue"
+    APP_ENV: "development"
+    APP_MESSAGE: "Welcome to the Color App!"
+
+secretStore:
+  enabled: true
+  name: color-app-ss
+  region: us-east-1
+
+externalSecret:
+  enabled: true
+  refreshInterval: "1m"
+  secretStoreRef:
+    name: color-app-ss
+    kind: SecretStore
+  data:
+    - secretKey: SECRET_KEY
+      remoteKey: color-app/secret
+      property: SECRET_KEY
+
+loadBalancer:
+  enabled: true
+  port: 80
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  storageClass: ""

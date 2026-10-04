@@ -1,0 +1,11 @@
+{{- if .Values.configmap.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "color-app.fullname" . }}-config
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "color-app.labels" . | nindent 4 }}
+data:
+  {{- toYaml .Values.configmap.data | nindent 2 }}
+{{- end }}
