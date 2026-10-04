@@ -12,8 +12,6 @@ public_subnet_cidrs  = ["10.2.101.0/24", "10.2.102.0/24", "10.2.103.0/24"]
 # Node group
 node_instance_types = ["t3.medium"]
 node_desired_size   = 2
-node_min_size       = 1
+node_min_size       = 2
 node_max_size       = 5
 
-# S3
-app_bucket_name = "color-app-bucket"

@@ -1,19 +1,23 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# WHAT IS A PERSISTENTVOLUMECLAIM?
-#   A PVC is a request for storage. The cluster fulfils it by binding a
-#   PersistentVolume (PV) that matches the requested size, access mode and
-#   storage class. On EKS with the EBS CSI driver, a PVC with storageClassName
-#   gp2 or gp3 automatically provisions an EBS volume.
+# VOLUME TYPE 5: PersistentVolumeClaim (standalone)
 #
-# USE CASE:
-#   Provision a dedicated EBS volume for color-app log storage on EKS.
-#   The EBS CSI driver (installed by Terraform) handles the volume lifecycle.
+# WHAT IS IT?
+#   A PVC is a request for durable storage. On EKS with the EBS CSI driver,
+#   creating a PVC automatically provisions an EBS volume in AWS.
+#   The PVC exists independently of any pod — it is NOT deleted when the pod
+#   is deleted. This is the key difference from emptyDir and hostPath.
+#
+#   PVC lifecycle:
+#     kubectl apply PVC  →  EBS volume created in AWS  →  Status: Pending
+#     Pod mounts PVC     →  EBS attached to node        →  Status: Bound
+#     Pod deleted        →  EBS detached, PVC remains   →  Status: Released
+#     New pod mounts PVC →  EBS reattached              →  Status: Bound
 #
 # USEFUL COMMANDS:
-#   kubectl apply -f pvc.yaml -n color-app
+#   kubectl apply -f 05-pvc.yaml -n color-app
 #   kubectl get pvc -n color-app
 #   kubectl describe pvc color-app-logs-pvc -n color-app
-#   # STATUS should move from Pending → Bound once a Pod mounts it
+#   # STATUS: Pending → Bound (once a pod mounts it)
 # ─────────────────────────────────────────────────────────────────────────────
 apiVersion: v1
 kind: PersistentVolumeClaim

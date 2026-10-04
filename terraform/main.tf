@@ -137,31 +137,6 @@ resource "aws_iam_role_policy" "lb_controller_extra" {
   })
 }
 
-# S3 bucket for application use
-resource "aws_s3_bucket" "app" {
-  bucket = "${var.app_bucket_name}-${var.environment}"
-
-  tags = {
-    Name        = "${var.app_bucket_name}-${var.environment}"
-    Environment = var.environment
-  }
-}
-
-resource "aws_s3_bucket_versioning" "app" {
-  bucket = aws_s3_bucket.app.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "app" {
-  bucket                  = aws_s3_bucket.app.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
 # IRSA for pods - ECR and CloudWatch Logs access
 module "app_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"

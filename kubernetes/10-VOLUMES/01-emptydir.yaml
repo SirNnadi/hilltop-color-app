@@ -1,0 +1,82 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# WHAT IS A VOLUME?
+#
+#   By default, a container's filesystem is ephemeral — when the container
+#   crashes or the pod is deleted, all data written inside it is lost.
+#
+#   A Volume solves this by mounting a storage location into the container.
+#   The volume is defined at the POD level (not the container level) and
+#   then mounted into one or more containers inside that pod.
+#
+#   Two-step pattern used in every volume type:
+#
+#     spec:
+#       containers:
+#       - name: my-app
+#         volumeMounts:          # STEP 2 — mount it into the container
+#         - name: my-vol
+#           mountPath: /data
+#       volumes:                 # STEP 1 — define the volume on the pod
+#       - name: my-vol
+#         emptyDir: {}           # ← the volume TYPE goes here
+#
+#   Volume types covered in this folder:
+#     01 - emptyDir      → temporary, dies with the pod
+#     02 - hostPath      → node disk, survives pod delete (node-local)
+#     03 - configMap     → config files mounted read-only
+#     04 - secret        → secret files mounted in-memory
+#     05 - PVC           → durable EBS storage, survives everything
+#     06 - PVC + Pod     → full demo with persistence proof
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# VOLUME TYPE 1: emptyDir
+#
+# WHAT IS IT?
+#   An emptyDir volume is created when a Pod is assigned to a node.
+#   It starts empty. All containers in the pod can read and write to it.
+#   When the Pod is deleted, the data is gone permanently.
+#
+# KEY POINT:
+#   emptyDir survives container restarts (crash/OOM) but NOT pod deletion.
+#   This is the starting point to understand volumes — it shows WHY we need
+#   more durable volume types.
+#
+# USE CASES:
+#   - Scratch space for temporary processing
+#   - Sharing files between containers in the same pod (sidecar pattern)
+#   - Cache that can be rebuilt if lost
+#
+# DEMO STEPS:
+#   STEP 1 — Apply and write data
+#   kubectl apply -f 01-emptydir.yaml -n color-app
+#   kubectl exec -it color-app-emptydir -n color-app -- sh
+#   echo "hello from emptydir" > /tmp/scratch/test.txt
+#   cat /tmp/scratch/test.txt
+#   exit
+#
+#   STEP 2 — Delete the pod and see data is gone
+#   kubectl delete pod color-app-emptydir -n color-app
+#   kubectl apply -f 01-emptydir.yaml -n color-app
+#   kubectl exec -it color-app-emptydir -n color-app -- cat /tmp/scratch/test.txt
+#   # Error: file not found — data is gone ❌
+#   # This is WHY we need PVCs
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Pod
+metadata:
+  name: color-app-emptydir
+  namespace: color-app
+  labels:
+    app: color-app
+spec:
+  containers:
+  - name: color-app
+    image: 075120018043.dkr.ecr.us-east-1.amazonaws.com/color-app:v1
+    ports:
+    - containerPort: 8080
+    volumeMounts:
+    - name: scratch
+      mountPath: /tmp/scratch
+  volumes:
+  - name: scratch
+    emptyDir: {}

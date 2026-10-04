@@ -1,0 +1,95 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# STATEFULSET
+#
+# WHAT IS IT?
+#   A StatefulSet manages pods that need a stable identity and persistent
+#   storage. Unlike a Deployment, each pod gets:
+#     - A stable, predictable name:  color-app-ss-0, color-app-ss-1, color-app-ss-2
+#     - Its own PVC that is NOT deleted when the pod is deleted
+#     - Ordered startup and shutdown (0 → 1 → 2, then 2 → 1 → 0)
+#
+# USE CASES:
+#   - Databases (MySQL, PostgreSQL, MongoDB)
+#   - Message queues (Kafka, RabbitMQ)
+#   - Any app where each instance needs its own persistent storage
+#
+# KEY DIFFERENCE FROM DEPLOYMENT:
+#   Deployment pods are interchangeable — any pod can be replaced by any other.
+#   StatefulSet pods have identity — pod-0 always gets the same EBS volume
+#   even after being deleted and recreated.
+#
+# DEMO STEPS:
+#   1. Apply this file
+#   2. Write data into pod-0's volume
+#   3. Delete pod-0
+#   4. Watch it recreate with the SAME volume — data is still there
+#
+# USEFUL COMMANDS:
+#   kubectl apply -f statefulset.yaml -n color-app
+#   kubectl get statefulset -n color-app
+#   kubectl get pods -n color-app -l app=color-app-ss -w
+#   kubectl get pvc -n color-app
+#   kubectl exec -it color-app-ss-0 -n color-app -- sh
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Headless Service — required by StatefulSet for stable DNS per pod
+# Each pod gets a DNS entry: color-app-ss-0.color-app-ss-headless.color-app.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: color-app-ss-headless
+  namespace: color-app
+spec:
+  clusterIP: None
+  selector:
+    app: color-app-ss
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: color-app-ss
+  namespace: color-app
+spec:
+  serviceName: color-app-ss-headless   # must match the headless service above
+  replicas: 3
+  selector:
+    matchLabels:
+      app: color-app-ss
+  template:
+    metadata:
+      labels:
+        app: color-app-ss
+    spec:
+      containers:
+      - name: color-app
+        image: 075120018043.dkr.ecr.us-east-1.amazonaws.com/color-app:v1
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+        volumeMounts:
+        - name: app-data
+          mountPath: /usr/src/app/data   # each pod gets its own EBS volume here
+  # volumeClaimTemplates creates a separate PVC for EACH pod automatically
+  # color-app-ss-0 → app-data-color-app-ss-0
+  # color-app-ss-1 → app-data-color-app-ss-1
+  # color-app-ss-2 → app-data-color-app-ss-2
+  volumeClaimTemplates:
+  - metadata:
+      name: app-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: gp2
+      resources:
+        requests:
+          storage: 1Gi

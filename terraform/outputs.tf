@@ -7,10 +7,6 @@ output "cluster_name" {
   value = module.eks.cluster_name
 }
 
-output "app_bucket_name" {
-  value = aws_s3_bucket.app.bucket
-}
-
 output "app_irsa_role_arn" {
   description = "Service account role ARN (ECR + CloudWatch)"
   value       = module.app_irsa.iam_role_arn

@@ -58,7 +58,3 @@ variable "kubernetes_version" {
   type        = string
 }
 
-variable "app_bucket_name" {
-  description = "S3 bucket for application use"
-  type        = string
-}

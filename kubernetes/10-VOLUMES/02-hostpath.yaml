@@ -1,0 +1,54 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# VOLUME TYPE 2: hostPath
+#
+# WHAT IS IT?
+#   A hostPath volume mounts a file or directory from the HOST NODE's
+#   filesystem into the pod. Data survives pod deletion — but only as long
+#   as the pod comes back to the SAME node.
+#
+# KEY POINT:
+#   hostPath is node-local. If the pod is rescheduled to a different node,
+#   the data is not there. This is WHY we need PVCs backed by network storage
+#   like EBS — which is accessible from any node.
+#
+# USE CASES:
+#   - DaemonSets reading node-level logs (/var/log)
+#   - Accessing node system files (/proc, /sys) for monitoring agents
+#   - NOT recommended for general app storage
+#
+# DEMO STEPS:
+#   STEP 1 — Apply and write data
+#   kubectl apply -f 02-hostpath.yaml -n color-app
+#   kubectl exec -it color-app-hostpath -n color-app -- sh
+#   echo "written to node disk" > /node-data/test.txt
+#   cat /node-data/test.txt
+#   exit
+#
+#   STEP 2 — Delete pod and recreate — data survives IF same node
+#   kubectl delete pod color-app-hostpath -n color-app
+#   kubectl apply -f 02-hostpath.yaml -n color-app
+#   kubectl exec -it color-app-hostpath -n color-app -- cat /node-data/test.txt
+#   # May or may not be there depending on which node it lands on ⚠️
+#   # This is WHY we need PVCs — node-independent storage
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Pod
+metadata:
+  name: color-app-hostpath
+  namespace: color-app
+  labels:
+    app: color-app
+spec:
+  containers:
+  - name: color-app
+    image: 075120018043.dkr.ecr.us-east-1.amazonaws.com/color-app:v1
+    ports:
+    - containerPort: 8080
+    volumeMounts:
+    - name: node-data
+      mountPath: /node-data
+  volumes:
+  - name: node-data
+    hostPath:
+      path: /tmp/color-app-data   # directory on the node
+      type: DirectoryOrCreate     # creates it if it doesn't exist

@@ -8,16 +8,27 @@
 #   color-app writes logs to /var/log/color-app. Without a PVC those logs
 #   disappear when the Pod restarts. Mounting a PVC there persists them.
 #
-# APPLY AND TEST:
+# DEMO — VOLUME SURVIVES POD DELETION:
+#
+#   STEP 1 — Apply and wait for PVC to bind
 #   kubectl apply -f pvc-volume.yaml -n color-app
-#   kubectl get pvc -n color-app                          # wait for Bound
+#   kubectl get pvc -n color-app                          # wait for: Bound
+#   kubectl get pod color-app-pvc-vol -n color-app        # wait for: Running
+#
+#   STEP 2 — Write data into the volume
 #   kubectl exec -it color-app-pvc-vol -n color-app -- sh
-#   # Inside the pod — write a file:
-#   echo "hello" > /var/log/color-app/test.txt
-#   # Delete and recreate the pod, then check the file is still there:
+#   echo "this data will survive pod deletion" > /var/log/color-app/test.txt
+#   cat /var/log/color-app/test.txt
+#   exit
+#
+#   STEP 3 — Delete the pod (simulates crash or eviction)
 #   kubectl delete pod color-app-pvc-vol -n color-app
+#   kubectl get pvc -n color-app                          # PVC still exists!
+#
+#   STEP 4 — Recreate the pod and verify data is still there
 #   kubectl apply -f pvc-volume.yaml -n color-app
 #   kubectl exec -it color-app-pvc-vol -n color-app -- cat /var/log/color-app/test.txt
+#   # Output: this data will survive pod deletion  ✅
 # ─────────────────────────────────────────────────────────────────────────────
 apiVersion: v1
 kind: PersistentVolumeClaim

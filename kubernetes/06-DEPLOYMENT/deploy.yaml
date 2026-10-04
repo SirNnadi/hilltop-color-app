@@ -32,6 +32,8 @@ spec:
     metadata:
       labels:
         app: color-app
+      annotations:
+        kubernetes.io/change-cause: "Initial deployment with color-app:v1"
     spec:
       serviceAccountName: color-app-sa
       containers:

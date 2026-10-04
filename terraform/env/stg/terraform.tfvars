@@ -15,5 +15,3 @@ node_desired_size   = 2
 node_min_size       = 2
 node_max_size       = 5
 
-# S3
-app_bucket_name = "color-app-bucket"
