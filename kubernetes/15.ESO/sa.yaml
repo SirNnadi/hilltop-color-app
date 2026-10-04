@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: eso-sa
+  namespace: devops
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::068704208379:role/color-app-eso-role
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: color-app-ss
+  namespace: devops
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: us-east-1
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: eso-sa    
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: color-app-es
+  namespace: devops
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: color-app-ss
+    kind: SecretStore
+  target:
+    name: color-app-config-eso 
+    creationPolicy: Owner
+  data:
+  - secretKey: SECRET_KEY
+    remoteRef:
+      key: color-app/prod
+      property: SECRET_KEY
+  - secretKey: DB_PASSWORD
+    remoteRef:
+      key: color-app/prod
+      property: DB_PASSWORD
+  - secretKey: API_KEY
+    remoteRef:
+      key: color-app/prod
+      property: API_KEY            
