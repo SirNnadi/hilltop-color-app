@@ -9,7 +9,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/CHAFAH/hilltop-color-app.git
+    repoURL: https://github.com/SirNnadi/hilltop-color-app.git
     targetRevision: main
     path: helm/color-app
     helm:
