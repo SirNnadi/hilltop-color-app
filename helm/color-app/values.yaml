@@ -82,6 +82,10 @@ configmap:
     APP_ENV: "production"
     APP_MESSAGE: "Hello, Jesus is Lord!"
 
+esoServiceAccount:
+  create: true
+  roleArn: arn:aws:iam::068704208379:role/color-app-eso-role
+
 secretStore:
   enabled: true
   name: color-app-ss
